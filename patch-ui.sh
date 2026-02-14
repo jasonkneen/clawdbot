@@ -1,15 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Paths
-DEV_ROOT="/Users/jkneen/Documents/GitHub/atomicbot"
-INSTALLED="/Users/jkneen/.nvm/versions/node/v22.14.0/lib/node_modules/openclaw"
+# Paths — resolve relative to script location
+DEV_ROOT="$(cd "$(dirname "$0")" && pwd)"
+
+# Detect global openclaw installation dynamically
+if command -v openclaw &>/dev/null; then
+  OPENCLAW_BIN="$(command -v openclaw)"
+  # Follow symlink if needed (e.g., npm/pnpm global installs)
+  if [ -L "$OPENCLAW_BIN" ]; then
+    OPENCLAW_BIN="$(readlink -f "$OPENCLAW_BIN" 2>/dev/null || readlink "$OPENCLAW_BIN")"
+  fi
+  INSTALLED="$(cd "$(dirname "$OPENCLAW_BIN")/.." && pwd)"
+else
+  echo "✗ openclaw not found in PATH. Is it installed globally?"
+  echo "  Run: npm install -g openclaw  or  pnpm add -g openclaw"
+  exit 1
+fi
+
 UI_DIR="$DEV_ROOT/ui"
 BUILD_OUT="$DEV_ROOT/dist/control-ui"
 INSTALL_TARGET="$INSTALLED/dist/control-ui"
 BACKUP="$INSTALLED/dist/control-ui.bak"
-
-export PATH="$HOME/.nvm/versions/node/v22.14.0/bin:/opt/homebrew/bin:$PATH"
 
 echo "=== OpenClaw UI Patch ==="
 echo ""
