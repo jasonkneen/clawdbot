@@ -88,3 +88,4 @@ local/
 .auto-claude/
 /local/
 package-lock.json
+apps/.auto-claude/
