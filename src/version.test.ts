@@ -132,4 +132,89 @@ describe("version resolution", () => {
       ),
     ).toBe("fallback");
   });
+
+  it("uses OPENCLAW_BUNDLED_VERSION when OPENCLAW_VERSION and OPENCLAW_SERVICE_VERSION are absent", () => {
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: undefined,
+        OPENCLAW_SERVICE_VERSION: undefined,
+        OPENCLAW_BUNDLED_VERSION: "3.1.0",
+        npm_package_version: "1.0.0",
+      }),
+    ).toBe("3.1.0");
+  });
+
+  it("OPENCLAW_SERVICE_VERSION takes precedence over OPENCLAW_BUNDLED_VERSION", () => {
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: undefined,
+        OPENCLAW_SERVICE_VERSION: "2.5.0",
+        OPENCLAW_BUNDLED_VERSION: "3.1.0",
+        npm_package_version: "1.0.0",
+      }),
+    ).toBe("2.5.0");
+  });
+
+  it("OPENCLAW_BUNDLED_VERSION takes precedence over npm_package_version", () => {
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: undefined,
+        OPENCLAW_SERVICE_VERSION: undefined,
+        OPENCLAW_BUNDLED_VERSION: "3.1.0",
+        npm_package_version: "1.0.0",
+      }),
+    ).toBe("3.1.0");
+
+    // Blank OPENCLAW_BUNDLED_VERSION falls through to npm_package_version
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: undefined,
+        OPENCLAW_SERVICE_VERSION: undefined,
+        OPENCLAW_BUNDLED_VERSION: "  ",
+        npm_package_version: "1.0.0",
+      }),
+    ).toBe("1.0.0");
+  });
+
+  it("precedence order: OPENCLAW_VERSION > OPENCLAW_SERVICE_VERSION > OPENCLAW_BUNDLED_VERSION > npm_package_version", () => {
+    // All present — OPENCLAW_VERSION wins
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: "9.0.0",
+        OPENCLAW_SERVICE_VERSION: "8.0.0",
+        OPENCLAW_BUNDLED_VERSION: "7.0.0",
+        npm_package_version: "6.0.0",
+      }),
+    ).toBe("9.0.0");
+
+    // No OPENCLAW_VERSION — OPENCLAW_SERVICE_VERSION wins
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: "",
+        OPENCLAW_SERVICE_VERSION: "8.0.0",
+        OPENCLAW_BUNDLED_VERSION: "7.0.0",
+        npm_package_version: "6.0.0",
+      }),
+    ).toBe("8.0.0");
+
+    // No OPENCLAW_VERSION or SERVICE — OPENCLAW_BUNDLED_VERSION wins
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: "",
+        OPENCLAW_SERVICE_VERSION: "",
+        OPENCLAW_BUNDLED_VERSION: "7.0.0",
+        npm_package_version: "6.0.0",
+      }),
+    ).toBe("7.0.0");
+
+    // Only npm_package_version present
+    expect(
+      resolveRuntimeServiceVersion({
+        OPENCLAW_VERSION: "",
+        OPENCLAW_SERVICE_VERSION: "",
+        OPENCLAW_BUNDLED_VERSION: "",
+        npm_package_version: "6.0.0",
+      }),
+    ).toBe("6.0.0");
+  });
 });
